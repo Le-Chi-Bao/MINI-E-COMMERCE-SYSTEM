@@ -11,6 +11,8 @@ docker-compose up -d
 # 4. Kiểm tra các service
 docker-compose ps
 
+docker-compose logs web
+
 # 5. Truy cập ứng dụng
 # FastAPI: http://localhost:8000/docs
 # Gradio: http://localhost:7860

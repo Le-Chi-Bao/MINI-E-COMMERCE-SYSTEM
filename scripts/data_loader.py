@@ -62,7 +62,7 @@ class DataLoader:
         return X_train, X_test, y_train, y_test
 
 if __name__ == "__main__":
-    loader = DataLoader("../CrawlerData/final_data_phone.csv")
+    loader = DataLoader("../Data/raw/final_data_phone.csv")
     loader.load_raw_data()
     feast_data = loader.preprocess_for_feast("data/processed/phone_data_processed.parquet")
     X_train, X_test, y_train, y_test = loader.get_train_test_split()

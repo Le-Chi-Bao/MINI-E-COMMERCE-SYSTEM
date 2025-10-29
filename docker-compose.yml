@@ -1,19 +1,41 @@
 services:
   # ✅ KHÔNG CẦN MYSQL CONTAINER - dùng MySQL trên host
 
+  # api:
+  #   build: .
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     - DATABASE_URL=mysql+pymysql://root:120906@host.docker.internal:3306/phone_predictor
+  #     - API_KEY=demo_key_12345
+  #   volumes:
+  #     - ./models:/app/models
+  #     - ./data:/app/data
+  #   restart: unless-stopped
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"  # ✅ QUAN TRỌNG: Cho Windows
   api:
     build: .
     ports:
       - "8000:8000"
+      - "6566:6566"  # ✅ THÊM PORT CHO FEAST SERVER
     environment:
       - DATABASE_URL=mysql+pymysql://root:120906@host.docker.internal:3306/phone_predictor
       - API_KEY=demo_key_12345
     volumes:
       - ./models:/app/models
       - ./data:/app/data
+      - .:/app  # ✅ QUAN TRỌNG
+    working_dir: /app  # ✅ QUAN TRỌNG
+    command: >
+      sh -c "
+        feast apply &&  # ✅ ÁP DỤNG FEATURES KHI KHỞI ĐỘNG
+        feast serve --port 6566 &  # ✅ KHỞI ĐỘNG FEAST SERVER
+        python api/main.py  # ✅ KHỞI ĐỘNG API CHÍNH
+      "
     restart: unless-stopped
     extra_hosts:
-      - "host.docker.internal:host-gateway"  # ✅ QUAN TRỌNG: Cho Windows
+      - "host.docker.internal:host-gateway"
 
   web:
     build: .

@@ -1,9 +1,6 @@
-project: phone_pricing
+project: my_phone_features
 registry: data/registry.db
 provider: local
 online_store:
-    type: redis
-    connection_string: localhost:6379
-offline_store:
-    type: file
-entity_key_serialization_version: 2
+    type: sqlite
+    path: data/online_store.db
