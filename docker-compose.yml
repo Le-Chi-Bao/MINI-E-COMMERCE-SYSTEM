@@ -1,38 +1,20 @@
-services:
-  # ✅ KHÔNG CẦN MYSQL CONTAINER - dùng MySQL trên host
+# docker-compose.yml
+version: '3.8'
 
-  # api:
-  #   build: .
-  #   ports:
-  #     - "8000:8000"
-  #   environment:
-  #     - DATABASE_URL=mysql+pymysql://root:120906@host.docker.internal:3306/phone_predictor
-  #     - API_KEY=demo_key_12345
-  #   volumes:
-  #     - ./models:/app/models
-  #     - ./data:/app/data
-  #   restart: unless-stopped
-  #   extra_hosts:
-  #     - "host.docker.internal:host-gateway"  # ✅ QUAN TRỌNG: Cho Windows
+services:
   api:
     build: .
     ports:
       - "8000:8000"
-      - "6566:6566"  # ✅ THÊM PORT CHO FEAST SERVER
     environment:
       - DATABASE_URL=mysql+pymysql://root:120906@host.docker.internal:3306/phone_predictor
       - API_KEY=demo_key_12345
     volumes:
       - ./models:/app/models
-      - ./data:/app/data
-      - .:/app  # ✅ QUAN TRỌNG
-    working_dir: /app  # ✅ QUAN TRỌNG
-    command: >
-      sh -c "
-        feast apply &&  # ✅ ÁP DỤNG FEATURES KHI KHỞI ĐỘNG
-        feast serve --port 6566 &  # ✅ KHỞI ĐỘNG FEAST SERVER
-        python api/main.py  # ✅ KHỞI ĐỘNG API CHÍNH
-      "
+      - ./scripts:/app/scripts  # ✅ THÊM ĐƯỜNG DẪN NÀY - QUAN TRỌNG!
+      - ./app:/app/app          # ✅ THÊM ĐƯỜNG DẪN NÀY - QUAN TRỌNG!
+    working_dir: /app           # ✅ THÊM DÒNG NÀY
+    command: python app/main.py # ✅ SỬA LẠI COMMAND
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -41,7 +23,6 @@ services:
     build: .
     ports:
       - "7860:7860"
-    command: python web/gradio_app.py
     environment:
       - API_URL=http://api:8000
       - API_KEY=demo_key_12345
@@ -49,6 +30,8 @@ services:
       - api
     volumes:
       - ./models:/app/models
+      - ./scripts:/app/scripts    # ✅ THÊM
+      - ./web:/app/web            # ✅ THÊM (nếu có thư mục web)
+    working_dir: /app             # ✅ THÊM
+    command: python web/gradio_app.py
     restart: unless-stopped
-
-# ✅ KHÔNG CẦN volumes section

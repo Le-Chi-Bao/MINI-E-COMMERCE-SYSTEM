@@ -25,8 +25,11 @@ class PredictorDependency:
     def __call__(self):
         if self.predictor is None:
             try:
-                # ✅ IMPORT INSIDE FUNCTION để tránh circular import
-                from scripts.predictor import PhonePricePredictor
+                import sys
+                import os
+                sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'scripts'))
+                from predictor import PhonePricePredictor
+
                 self.predictor = PhonePricePredictor()
                 print("✅ Predictor initialized successfully")
             except Exception as e:
@@ -37,7 +40,22 @@ class PredictorDependency:
                 )
         return self.predictor
 
-# Create singleton instance
-get_predictor = PredictorDependency()
+# # Create singleton instance
+# get_predictor = PredictorDependency()
 
-# ... rest of the code unchanged ...
+# # ... rest of the code unchanged ...
+# class PredictorDependency:
+#     def __call__(self):
+#         if self.predictor is None:
+#             try:
+#                 # ✅ THÊM ĐƯỜNG DẪN
+#                 import sys
+#                 import os
+#                 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'scripts'))
+                
+#                 from predictor import PhonePricePredictor  # ✅ IMPORT TRONG FUNCTION
+#                 self.predictor = PhonePricePredictor()
+#                 print("✅ Predictor initialized successfully")
+#             except Exception as e:
+#                 print(f"❌ Failed to initialize predictor: {e}")
+#                 # Xử lý lỗi...

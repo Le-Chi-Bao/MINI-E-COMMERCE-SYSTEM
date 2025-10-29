@@ -28,11 +28,20 @@ class MobilePhoneTransformer(BaseEstimator, TransformerMixin):
         self.feature_names_ = None
     
     def fit(self, X, y=None):
-        self.numeric_features = X.select_dtypes(include=['float64']).columns.tolist()
-        
+        # Transform trước để có đầy đủ features
+        X_temp = X.copy()
+        X_temp = self._drop_unnecessary_columns(X_temp)
+        X_temp = self._process_resolution(X_temp)
+        X_temp = self._handle_binary_features(X_temp)
+        X_temp = self._handle_noise_with_median(X_temp)
+        X_temp = self._handle_missing_with_median(X_temp)
+    
+        # Sau đó mới fit scaler với đầy đủ features
+        self.numeric_features = X_temp.select_dtypes(include=['float64']).columns.tolist()
+    
         if len(self.numeric_features) > 0:
-            self.scaler.fit(X[self.numeric_features])
-        
+            self.scaler.fit(X_temp[self.numeric_features])
+    
         self.feature_names_ = self.get_feature_names_out()
         return self
     
@@ -155,6 +164,12 @@ class TargetTransformer(BaseEstimator, TransformerMixin):
         
         y_processed = y_processed.replace('Giá Liên Hệ', np.nan)
         y_processed = pd.to_numeric(y_processed, errors='coerce')
+        
+        # THÊM XỬ LÝ NAN - QUAN TRỌNG!
+        if y_processed.isnull().sum() > 0:
+            print(f"⚠️  Found {y_processed.isnull().sum()} NaN values in target, filling with median")
+            median_value = y_processed.median()
+            y_processed = y_processed.fillna(median_value)
         
         if self.handle_outliers:
             outliers_mask = y_processed > self.outlier_threshold

@@ -1,12 +1,12 @@
 # 📁 scripts/train_model.py (THÊM MỚI)
 import argparse
-from scripts.data_loader import DataLoader
-from scripts.model_trainer import ModelTrainer
+from data_loader import DataLoader
+from model_trainer import ModelTrainer
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data-path", default="data/raw/final_data_phone.csv")
-    parser.add_argument("--models-dir", default="models")
+    parser.add_argument("--data-path", default="../data/raw/final_data_phone.csv")
+    parser.add_argument("--models-dir", default="../models")
     args = parser.parse_args()
     
     print("🚀 Starting model training...")

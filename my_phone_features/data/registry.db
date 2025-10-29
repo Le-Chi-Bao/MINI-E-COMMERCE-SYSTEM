@@ -1,1 +1,80 @@
-1"$744cbe62-36b5-44a3-815c-a60467f13d03*±Ø…ÈøÃ±¿
+
+\
+<
+phoneA smartphone product"
+product_idJmy_phone_features
+÷‡ˆÈ°†À÷‡ˆÈ°†À
+H
+(
+__dummy"
+__dummy_idJmy_phone_features
+÷‡ˆÈ°†À÷‡ˆÈ°†À1"$1c3ba227-c09f-4a36-b962-92e7dd0bbeae*ÿíˆÈ€Ñê¤2–
+õ
+phone_cameramy_phone_featuresphone"
+main_camera_mp"
+num_cameras"
+has_telephoto"
+has_ultrawide"
+has_ois"
+camera_feature_count"
+camera_score*
+teamcamera2€ç„:event_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquetŠ1feast.infra.offline_stores.file_source.FileSource¢phone_data_source@b
+
+product_id
+÷‡ˆÈ°†À÷‡ˆÈ°†À2º
+™
+phone_productmy_phone_featuresphone"
+NumberOfReview"
+has_warranty*
+teamproduct2€ÎÚ:event_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquetŠ1feast.infra.offline_stores.file_source.FileSource¢phone_data_source@b
+
+product_id
+÷‡ˆÈ°†À÷‡ˆÈ°†À2â
+Á
+phone_displaymy_phone_featuresphone"
+
+ScreenSize"
+	Res_Width"
+
+Res_Height"
+PPI"
+total_resolution*
+teamdisplay2€ç„:event_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquetŠ1feast.infra.offline_stores.file_source.FileSource¢phone_data_source@b
+
+product_id
+÷‡ˆÈ°†À÷‡ˆÈ°†À:Â
+¡
+pricing_servicemy_phone_featuresî
+phone_display
+
+ScreenSize
+	Res_Width
+
+Res_Height
+PPI
+total_resolution*created_timestamp:created_timestampBievent_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquet¢phone_data_source£
+phone_camera
+main_camera_mp
+num_cameras
+has_telephoto
+has_ultrawide
+has_ois
+camera_feature_count
+camera_score*created_timestamp:created_timestampBievent_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquet¢phone_data_sourceÆ
+phone_product
+NumberOfReview
+has_warranty*created_timestamp:created_timestampBievent_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquet¢phone_data_source"
+purposeprice_prediction
+÷‡ˆÈ€Öþ÷‡ˆÈ€ÖþRõ
+Î
+,feast.infra.online_stores.sqlite.SqliteTable"
+{C:\Users\ADMIN\OneDrive\Desktop\CÃ¡c mÃ´n há»c nÄƒm 2\software engreneering\Project\my_phone_features\data\online_store.dbmy_phone_features_phone_camera
+Ï
+,feast.infra.online_stores.sqlite.SqliteTable"ž
+{C:\Users\ADMIN\OneDrive\Desktop\CÃ¡c mÃ´n há»c nÄƒm 2\software engreneering\Project\my_phone_features\data\online_store.dbmy_phone_features_phone_display
+Ï
+,feast.infra.online_stores.sqlite.SqliteTable"ž
+{C:\Users\ADMIN\OneDrive\Desktop\CÃ¡c mÃ´n há»c nÄƒm 2\software engreneering\Project\my_phone_features\data\online_store.dbmy_phone_features_phone_productb±event_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquetŠ1feast.infra.offline_stores.file_source.FileSource¢phone_data_sourceªmy_phone_featuresŠ1
+
+my_phone_features
+÷‡ˆÈà”i÷‡ˆÈà”i

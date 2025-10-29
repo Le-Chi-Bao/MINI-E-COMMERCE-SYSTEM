@@ -6,7 +6,16 @@ import uuid
 
 from app.database import get_db
 from app import schemas, models
-from scripts.predictor import PhonePricePredictor
+# from scripts.predictor import PhonePricePredictor
+#################################################################################
+# endpoints.py - Sửa import
+import sys
+import os
+# Thêm đường dẫn đến scripts
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'scripts'))
+
+from predictor import PhonePricePredictor  # ✅ IMPORT ĐÚNG
+
 
 router = APIRouter(prefix="/api/v1", tags=["predictions"])
 predictor = PhonePricePredictor()

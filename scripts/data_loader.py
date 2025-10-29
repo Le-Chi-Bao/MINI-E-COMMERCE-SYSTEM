@@ -11,7 +11,7 @@ class DataLoader:
     def load_raw_data(self):
         self.dataset = pd.read_csv(self.data_path)
         self.dataset['product_id'] = (self.dataset.index + 1).astype(str).str.zfill(3)
-        print(f"📥 Loaded dataset with {len(self.dataset)} rows")
+        print(f" Loaded dataset with {len(self.dataset)} rows")
         return self
     
     def preprocess_for_feast(self, save_path=None):
@@ -30,7 +30,7 @@ class DataLoader:
         
         if save_path:
             dataset_clean.to_parquet(save_path, index=False)
-            print(f"💾 Saved processed data to {save_path}")
+            print(f" Saved processed data to {save_path}")
         
         return dataset_clean
     
@@ -64,5 +64,5 @@ class DataLoader:
 if __name__ == "__main__":
     loader = DataLoader("../Data/raw/final_data_phone.csv")
     loader.load_raw_data()
-    feast_data = loader.preprocess_for_feast("data/processed/phone_data_processed.parquet")
+    feast_data = loader.preprocess_for_feast("../my_phone_features/data/processed/phone_data_processed.parquet")
     X_train, X_test, y_train, y_test = loader.get_train_test_split()

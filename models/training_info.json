@@ -1,0 +1,42 @@
+{
+  "feature_columns": [
+    "ScreenSize",
+    "NumberOfReview",
+    "main_camera_mp",
+    "num_cameras",
+    "has_telephoto",
+    "has_ultrawide",
+    "has_ois",
+    "has_warranty",
+    "Res_Width",
+    "Res_Height",
+    "PPI",
+    "total_resolution",
+    "camera_feature_count",
+    "camera_score"
+  ],
+  "training_date": "2025-10-29T23:00:53.698158",
+  "model_performance": {
+    "LinearRegression": {
+      "mae": 5851469.490315142,
+      "r2_score": 0.16483893125308446,
+      "cv_mae": 0.5284203955816321
+    },
+    "KNeighbors": {
+      "mae": 5593962.780484959,
+      "r2_score": 0.23211584124765883,
+      "cv_mae": 0.5286158586933054
+    },
+    "DecisionTree": {
+      "mae": 7310993.450093626,
+      "r2_score": -0.38693906725527416,
+      "cv_mae": 0.4500272078645984
+    },
+    "XGBoost": {
+      "mae": 7080538.408991228,
+      "r2_score": -0.38854688326360987,
+      "cv_mae": 0.4130069559937601
+    }
+  },
+  "best_model": "KNeighbors"
+}

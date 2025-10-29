@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 from datetime import datetime
 
-from scripts.transformer import MobilePhoneTransformer, TargetTransformer
+from transformer import MobilePhoneTransformer, TargetTransformer
 
 class ModelTrainer:
     def __init__(self, models_dir="models"):
@@ -121,9 +121,9 @@ class ModelTrainer:
         print(f"\n🏆 BEST MODEL: {best_model}")
 
 if __name__ == "__main__":
-    from scripts.data_loader import DataLoader
-    
-    loader = DataLoader("../CrawlerData/final_data_phone.csv")
+    from data_loader import DataLoader
+
+    loader = DataLoader("../Data/raw/final_data_phone.csv")
     loader.load_raw_data()
     X_train, X_test, y_train, y_test = loader.get_train_test_split()
     
