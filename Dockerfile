@@ -1,59 +1,31 @@
+# Dockerfile
 FROM python:3.9-slim
 
 WORKDIR /app
 
-# ✅ QUAN TRỌNG: Thêm Python path để tìm thấy scripts/
-ENV PYTHONPATH=/app
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-# ✅ TỐI ƯU: Chỉ cài build dependencies, xóa sau khi dùng
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# ✅ COPY requirements TRƯỚC để tận dụng cache Docker
+# Copy requirements first for better caching
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# ✅ TỐI ƯU: Xóa build dependencies sau khi cài packages
-RUN apt-get purge -y gcc g++ && apt-get autoremove -y
-
-# ✅ COPY TOÀN BỘ PROJECT
+# Copy all project files
 COPY . .
 
-# ✅ TẠO THƯ MỤC CẦN THIẾT
-RUN mkdir -p models data/processed data/raw
+# Create necessary __init__.py files
+RUN find /app -type d -name "api" -o -name "web" | xargs -I {} touch {}/__init__.py
 
-# ✅ ĐẢM BẢO CÓ __init__.py TRONG SCRIPTS
-RUN find /app/scripts -type d -exec touch {}/__init__.py \;
+# Expose ports
+EXPOSE 8000 7869
 
-# ✅ KIỂM TRA CẤU TRÚC
-RUN echo "✅ Project structure:" && \
-    ls -la /app/ && \
-    echo "✅ Scripts content:" && \
-    ls -la /app/scripts/ && \
-    echo "✅ App content:" && \
-    ls -la /app/app/
-
-EXPOSE 8000 7860
-
-# ✅ DÙNG uvicorn với reload cho development
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
-# FROM python:3.9-slim
-
-# WORKDIR /app
-# ENV PYTHONPATH=/app
-
-# # ✅ TẠM THỜI BỎ GCC - THỬ KHÔNG CẦN COMPILE
-# # RUN apt-get update && apt-get install -y --fix-missing gcc g++
-
-# COPY requirements.txt .
-# RUN pip install --no-cache-dir -r requirements.txt
-
-# COPY . .
-# RUN mkdir -p models data/processed data/raw
-# RUN touch /app/scripts/__init__.py
-# RUN ls -la /app/scripts/ && echo "✅ Scripts directory verified"
-
-# EXPOSE 8000 7860
-# CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Default command (sẽ được override trong docker-compose)
+CMD ["echo", "Use docker-compose to start individual services"]

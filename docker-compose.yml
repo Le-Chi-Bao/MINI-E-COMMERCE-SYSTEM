@@ -1,37 +1,38 @@
 # docker-compose.yml
-version: '3.8'
-
 services:
+  # FastAPI Backend
   api:
     build: .
+    container_name: phone-prediction-api
     ports:
       - "8000:8000"
-    environment:
-      - DATABASE_URL=mysql+pymysql://root:120906@host.docker.internal:3306/phone_predictor
-      - API_KEY=demo_key_12345
     volumes:
       - ./models:/app/models
-      - ./scripts:/app/scripts  # ✅ THÊM ĐƯỜNG DẪN NÀY - QUAN TRỌNG!
-      - ./app:/app/app          # ✅ THÊM ĐƯỜNG DẪN NÀY - QUAN TRỌNG!
-    working_dir: /app           # ✅ THÊM DÒNG NÀY
-    command: python app/main.py # ✅ SỬA LẠI COMMAND
+      - ./my_phone_features:/app/my_phone_features
+      - ./Data:/app/Data
+    environment:
+      - ENVIRONMENT=production
+      - MODELS_PATH=/app/models
+      - FEATURE_STORE_PATH=/app/my_phone_features
+    command: python api/phone_api.py  # 👈 QUAN TRỌNG: override command
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     restart: unless-stopped
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
+  # Gradio Frontend
   web:
     build: .
+    container_name: phone-prediction-web
     ports:
-      - "7860:7860"
+      - "7869:7869"
     environment:
       - API_URL=http://api:8000
-      - API_KEY=demo_key_12345
+    command: python web/gradio_app.py  # 👈 QUAN TRỌNG: override command
     depends_on:
-      - api
-    volumes:
-      - ./models:/app/models
-      - ./scripts:/app/scripts    # ✅ THÊM
-      - ./web:/app/web            # ✅ THÊM (nếu có thư mục web)
-    working_dir: /app             # ✅ THÊM
-    command: python web/gradio_app.py
+      api:
+        condition: service_healthy
     restart: unless-stopped

@@ -17,7 +17,7 @@ phone_data_source = FileSource(
     created_timestamp_column="created_timestamp",
 )
 
-# Feature View 1: Display Features
+# Feature View 1: Display Features (GIỮ NGUYÊN)
 phone_display_fv = FeatureView(
     name="phone_display",
     entities=[phone],
@@ -34,7 +34,7 @@ phone_display_fv = FeatureView(
     tags={"team": "display"},
 )
 
-# Feature View 2: Camera Features  
+# Feature View 2: Camera Features (GIỮ NGUYÊN)
 phone_camera_fv = FeatureView(
     name="phone_camera",
     entities=[phone],
@@ -53,7 +53,7 @@ phone_camera_fv = FeatureView(
     tags={"team": "camera"},
 )
 
-# Feature View 3: Product Info
+# Feature View 3: Product Info (GIỮ NGUYÊN)
 phone_product_fv = FeatureView(
     name="phone_product",
     entities=[phone],
@@ -65,4 +65,35 @@ phone_product_fv = FeatureView(
     source=phone_data_source,
     online=True,
     tags={"team": "product"},
+)
+
+# 🆕 Feature View 4: Rating Scores (MỚI)
+phone_ratings_fv = FeatureView(
+    name="phone_ratings",
+    entities=[phone],
+    ttl=timedelta(days=180),
+    schema=[
+        Field(name="camera_rating", dtype=Float32),
+        Field(name="display_score", dtype=Float32),
+        Field(name="popularity_score", dtype=Float32),
+        Field(name="overall_score", dtype=Float32),
+    ],
+    source=phone_data_source,
+    online=True,
+    tags={"team": "ratings"},
+)
+
+# 🆕 Feature View 5: Value Metrics (MỚI)
+phone_value_fv = FeatureView(
+    name="phone_value",
+    entities=[phone],
+    ttl=timedelta(days=180),
+    schema=[
+        Field(name="value_score", dtype=Float32),
+        Field(name="is_premium", dtype=Int64),
+        Field(name="price_segment", dtype=Int64),  # Có thể dùng String nếu muốn
+    ],
+    source=phone_data_source,
+    online=True,
+    tags={"team": "value"},
 )

@@ -1,6 +1,7 @@
 from feast import FeatureStore
 import pandas as pd
 import os
+from transformer import MobilePhoneTransformer  # THÊM IMPORT NÀY
 
 # Path đến Feast repo
 feast_repo_path = "../my_phone_features"
@@ -8,11 +9,18 @@ fs = FeatureStore(repo_path=feast_repo_path)
 
 print("📥 Preparing COMPLETE training data...")
 
-# Load data gốc
-source_path = "../my_phone_features/data/processed/phone_data_processed.parquet"
-data = pd.read_parquet(source_path)
+# 🆕 SỬA: Load data GỐC và transform
+source_path = "../Data/raw/final_data_phone.csv"  # ĐƯỜNG DẪN ĐẾN DATA GỐC
+raw_data = pd.read_csv(source_path)
 
-print(f"📊 Source data shape: {data.shape}")
+print(f"📊 Raw data shape: {raw_data.shape}")
+
+# 🆕 SỬA: Transform data với transformer
+transformer = MobilePhoneTransformer()
+data = transformer.fit_transform(raw_data)
+
+print(f"🎯 Transformed data shape: {data.shape}")
+print(f"📋 All available columns: {data.columns.tolist()}")
 
 # 🆕 TẤT CẢ FEATURES CHO 3 MODELS
 all_features = [
@@ -43,7 +51,7 @@ if missing_targets:
     print(f"❌ Missing targets: {missing_targets}")
 
 # 🆕 TẠO TRAINING DATA VỚI TẤT CẢ FEATURES & TARGETS
-training_data = data[available_features + available_targets + ['product_id']]
+training_data = data[available_features + available_targets]
 
 print(f"✅ Complete training data shape: {training_data.shape}")
 print(f"🎯 Features: {len(available_features)}, Targets: {len(available_targets)}")

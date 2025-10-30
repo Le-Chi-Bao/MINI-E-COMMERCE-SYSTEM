@@ -1,248 +1,515 @@
+# web/gradio_app.py
+import os
 import gradio as gr
 import requests
-import os
-import time
-from typing import Dict, List, Tuple
+import pandas as pd
+from typing import Dict, List
 
+# API configuration - use environment variable with fallback
 API_URL = os.getenv("API_URL", "http://localhost:8000")
+print(f"🔗 Connecting to API at: {API_URL}")
 
-class PhonePricePredictorUI:
+class PhonePredictionApp:
     def __init__(self):
         self.api_url = API_URL
-    
-    def predict_price(self, screen_size, resolution_width, resolution_height, 
-                     main_camera_mp, num_cameras, has_telephoto, has_ultrawide, 
-                     has_ois, has_warranty, number_of_reviews, model_name) -> Tuple:
+        
+    def get_services_info(self):
+        """Lấy thông tin về các dịch vụ từ API"""
         try:
-            # Validate inputs
-            screen_size = float(screen_size) if screen_size else 6.1
-            resolution_width = int(resolution_width) if resolution_width else 1080
-            resolution_height = int(resolution_height) if resolution_height else 2400
-            main_camera_mp = float(main_camera_mp) if main_camera_mp else 12
-            num_cameras = int(num_cameras) if num_cameras else 2
-            number_of_reviews = int(number_of_reviews) if number_of_reviews else 100
-            
-            # Đảm bảo resolution_height không quá lớn (fix lỗi 422)
-            if resolution_height > 10000:
-                resolution_height = 4320  # Max reasonable value
-            
-            # Chuẩn bị features
-            features = {
-                "screen_size": screen_size,
-                "resolution_width": resolution_width,
-                "resolution_height": resolution_height,
-                "main_camera_mp": main_camera_mp,
-                "num_cameras": num_cameras,
-                "has_telephoto": bool(has_telephoto),
-                "has_ultrawide": bool(has_ultrawide),
-                "has_ois": bool(has_ois),
-                "has_warranty": bool(has_warranty),
-                "number_of_reviews": number_of_reviews
+            # Increase timeout for Docker environment
+            response = requests.get(f"{self.api_url}/services", timeout=30)
+            if response.status_code == 200:
+                return response.json()['services']
+            print(f"❌ API error: {response.status_code}")
+            return {}
+        except requests.exceptions.ConnectionError:
+            return {"error": f"Không thể kết nối đến API tại {self.api_url}"}
+        except Exception as e:
+            print(f"❌ Connection error: {e}")
+            return {}
+    
+    def predict_single_service(self, service: str, product_id: str):
+        """Dự đoán cho một service"""
+        try:
+            response = requests.get(f"{self.api_url}/predict/{service}/{product_id}", timeout=30)
+            if response.status_code == 200:
+                return response.json()
+            return {"error": f"API error: {response.status_code}"}
+        except requests.exceptions.ConnectionError:
+            return {"error": f"Không thể kết nối đến API tại {self.api_url}"}
+        except Exception as e:
+            return {"error": f"Connection error: {str(e)}"}
+    
+    def predict_flexible(self, services: List[str], input_method: str, product_id: str, manual_features: Dict):
+        """Dự đoán linh hoạt với các service được chọn"""
+        try:
+            payload = {
+                "services": services,
+                "input_method": input_method
             }
             
-            print(f"📤 Gửi request đến API: {features}")
-            
-            # Thử gọi API
-            endpoints = [
-                f"{self.api_url}/api/v1/predict",
-                f"{self.api_url}/predict", 
-                f"{self.api_url}/api/predict"
-            ]
-            
-            response = None
-            for endpoint in endpoints:
-                try:
-                    payload = {
-                        "phone_features": features,
-                        "model_name": model_name
-                    }
-                    response = requests.post(endpoint, json=payload, timeout=30)
-                    if response.status_code == 200:
-                        print(f"✅ API response từ {endpoint}")
-                        break
-                    else:
-                        print(f"❌ {endpoint}: {response.status_code} - {response.text}")
-                except Exception as e:
-                    print(f"❌ {endpoint} failed: {e}")
-                    continue
-            
-            if response and response.status_code == 200:
-                result = response.json()
-                print(f"📥 API result: {result}")
-                
-                # Xử lý response
-                predicted_price = result.get('predicted_price') or result.get('price') or 0
-                model_used = result.get('model_used') or result.get('model') or model_name
-                processing_time = result.get('processing_time') or result.get('time') or 0.1
-                product_id = result.get('product_id') or f"PHONE_{int(time.time())}"
-                
-                # TRẢ VỀ 5 GIÁ TRỊ RIÊNG BIỆT (không phải dictionary)
-                return (
-                    f"<div class='price-result'>{float(predicted_price):,.0f} VND</div>",
-                    model_used,
-                    "85%",
-                    f"{float(processing_time):.2f}s", 
-                    product_id
-                )
-                
+            if input_method == "feature_store":
+                payload["product_id"] = product_id
             else:
-                # Fallback calculation
-                print("⚠️ Using fallback calculation")
-                base_price = 5000000  # 5 triệu
-                price_multiplier = (
-                    (screen_size / 6.1) * 
-                    (main_camera_mp / 12) * 
-                    (num_cameras / 2) *
-                    (1.2 if has_telephoto else 1) *
-                    (1.1 if has_ultrawide else 1) *
-                    (1.1 if has_ois else 1) *
-                    (1.05 if has_warranty else 1)
-                )
-                estimated_price = base_price * price_multiplier
-                
-                # TRẢ VỀ 5 GIÁ TRỊ RIÊNG BIỆT
-                return (
-                    f"<div class='price-result'>{estimated_price:,.0f} VND</div>",
-                    f"{model_name} (local fallback)",
-                    "65% (ước tính)",
-                    "0.1s",
-                    f"LOCAL_{int(time.time())}"
-                )
-                
-        except Exception as e:
-            error_msg = f"Lỗi: {str(e)}"
-            print(f"❌ {error_msg}")
+                payload["manual_features"] = manual_features
             
-            # TRẢ VỀ 5 GIÁ TRỊ RIÊNG BIỆT CHO LỖI
-            return (
-                f"<div class='error-box'>{error_msg}</div>",
-                "",
-                "",
-                "",
-                ""
-            )
-    
-    def get_available_models(self) -> List[str]:
-        return ["kneighbors", "xgboost", "decisiontree", "linearregression"]
+            response = requests.post(f"{self.api_url}/predict", json=payload, timeout=30)
+            if response.status_code == 200:
+                return response.json()
+            else:
+                error_detail = response.json().get('detail', 'Unknown error')
+                return {"error": f"API error: {error_detail}"}
+                
+        except requests.exceptions.ConnectionError:
+            return {"error": f"Không thể kết nối đến API tại {self.api_url}"}
+        except Exception as e:
+            return {"error": f"Connection error: {str(e)}"}
 
-def create_interface():
-    predictor_ui = PhonePricePredictorUI()
+# ... (phần còn lại của code gradio giữ nguyên)
+
+def format_predictions(result):
+    """Định dạng kết quả dự đoán"""
+    if "error" in result:
+        return f"❌ Lỗi: {result['error']}"
+    
+    predictions = result.get('predictions', {})
+    
+    output = "## 📊 Kết Quả Dự Đoán\n\n"
+    
+    if 'overall_score' in predictions:
+        output += f"**🤖 Điểm Tổng Quan:** {predictions['overall_score']}/100\n"
+        score = predictions['overall_score']
+        if score >= 80:
+            output += "   ⭐⭐⭐⭐⭐ - Xuất sắc!\n"
+        elif score >= 60:
+            output += "   ⭐⭐⭐⭐ - Tốt\n"
+        elif score >= 40:
+            output += "   ⭐⭐⭐ - Trung bình\n"
+        else:
+            output += "   ⭐⭐ - Cần cải thiện\n"
+        output += "\n"
+    
+    if 'is_premium' in predictions:
+        premium_status = "Có ✅" if predictions['is_premium'] else "Không ❌"
+        prob = predictions.get('premium_probability', 0)
+        output += f"**💰 Flagship Phone:** {premium_status}\n"
+        output += f"   Xác suất: {prob:.1%}\n\n"
+    
+    if 'camera_rating' in predictions:
+        rating = predictions['camera_rating']
+        output += f"**📸 Đánh Giá Camera:** {rating}/5.0\n"
+        stars = "⭐" * int(rating) + "☆" * (5 - int(rating))
+        output += f"   {stars}\n\n"
+    
+    # Thêm thông tin input method
+    input_method = result.get('input_method', 'unknown')
+    output += f"*Phương thức nhập: {input_method}*"
+    
+    return output
+
+def create_gradio_interface():
+    app = PhonePredictionApp()
     
     with gr.Blocks(
-        title="Phone Price Predictor", 
-        theme=gr.themes.Soft(), 
+        title="Phone Prediction System",
+        theme=gr.themes.Soft(),
         css="""
-        .price-result {
-            font-size: 2.5em;
-            font-weight: bold;
-            color: #22c55e;
-            text-align: center;
-            padding: 20px;
-            border: 2px solid #22c55e;
-            border-radius: 10px;
-            background: #f0fdf4;
-            margin: 10px 0;
-        }
-        .error-box {
-            font-size: 1.2em;
-            color: #ef4444;
-            text-align: center;
-            padding: 15px;
-            border: 2px solid #ef4444;
-            border-radius: 10px;
-            background: #fef2f2;
-            margin: 10px 0;
-        }
+        .success-box { border: 2px solid #4CAF50; padding: 10px; border-radius: 5px; background: #f8fff8; }
+        .error-box { border: 2px solid #f44336; padding: 10px; border-radius: 5px; background: #fff8f8; }
+        .prediction-result { font-size: 16px; line-height: 1.6; }
         """
-    ) as interface:
-        
-        gr.Markdown("""
-        # 📱 Phone Price Predictor
-        **Dự đoán giá điện thoại thông minh bằng AI**
-        """)
-        
-        with gr.Row():
-            with gr.Column(scale=1):
-                gr.Markdown("### 🖥️ Thông số màn hình")
-                screen_size = gr.Slider(4.0, 8.0, value=6.1, step=0.1, label="Kích thước màn hình (inch)")
-                
-                with gr.Row():
-                    resolution_width = gr.Number(1170, label="Độ phân giải ngang (px)", precision=0, maximum=3840)
-                    resolution_height = gr.Number(2532, label="Độ phân giải dọc (px)", precision=0, maximum=4320)
-                
-                gr.Markdown("### 📷 Thông số camera")
-                main_camera_mp = gr.Slider(5, 200, value=12, step=1, label="Độ phân giải camera chính (MP)")
-                num_cameras = gr.Slider(1, 5, value=3, step=1, label="Số lượng camera")
-                
-                with gr.Row():
-                    has_telephoto = gr.Checkbox(label="📸 Camera Tele", value=True)
-                    has_ultrawide = gr.Checkbox(label="🌅 Camera Siêu Rộng", value=True)
-                    has_ois = gr.Checkbox(label="🔧 Chống rung quang học", value=True)
-                
-                gr.Markdown("### ℹ️ Thông tin sản phẩm")
-                has_warranty = gr.Checkbox(label="📋 Có bảo hành", value=True)
-                number_of_reviews = gr.Number(100, label="Số lượng đánh giá", precision=0, maximum=10000)
-                
-                gr.Markdown("### 🤖 Mô hình AI")
-                model_name = gr.Dropdown(
-                    choices=predictor_ui.get_available_models(),
-                    value="kneighbors",
-                    label="Chọn mô hình dự đoán"
-                )
-                
-                predict_btn = gr.Button("🎯 Dự đoán giá", variant="primary", size="lg")
-            
-            with gr.Column(scale=1):
-                gr.Markdown("### 💰 Kết quả dự đoán")
-                result_output = gr.HTML(value="<div class='price-result'>Nhập thông số và nhấn 'Dự đoán giá'</div>")
-                
-                with gr.Group():
-                    gr.Markdown("**📊 Chi tiết kết quả:**")
-                    model_used = gr.Textbox(label="Mô hình sử dụng", interactive=False)
-                    confidence = gr.Textbox(label="Độ tin cậy", interactive=False)
-                    processing_time = gr.Textbox(label="Thời gian xử lý", interactive=False)
-                    product_id = gr.Textbox(label="Mã sản phẩm", interactive=False)
-        
-        # Examples với giá trị hợp lý
-        examples = [
-            [6.1, 1170, 2532, 12.0, 3, True, True, True, True, 200, "kneighbors"],
-            [6.7, 1440, 3200, 48.0, 4, True, True, True, True, 500, "kneighbors"],
-            [6.5, 1080, 2400, 50.0, 3, False, True, False, True, 80, "kneighbors"],
-        ]
-        
-        gr.Examples(
-            examples=examples, 
-            inputs=[
-                screen_size, resolution_width, resolution_height, main_camera_mp,
-                num_cameras, has_telephoto, has_ultrawide, has_ois, 
-                has_warranty, number_of_reviews, model_name
-            ],
-            label="📋 Ví dụ mẫu"
+    ) as demo:
+        gr.Markdown(
+            """
+            # 📱 Hệ Thống Dự Đoán Điện Thoại
+            **Dự đoán thông minh cho điện thoại sử dụng Machine Learning**
+            """
         )
         
-        # XÓA FUNCTION update_result (không cần nữa)
-        # Vì predict_price bây giờ trả về trực tiếp 5 giá trị
+        # Tab 1: Dự đoán nhanh
+        with gr.Tab("🚀 Dự Đoán Nhanh"):
+            gr.Markdown("### Dự đoán nhanh theo Product ID")
+            
+            with gr.Row():
+                with gr.Column():
+                    quick_service = gr.Radio(
+                        choices=["recommender", "value_detector", "camera_predictor", "all"],
+                        label="Chọn Dịch Vụ Dự Đoán",
+                        value="recommender",
+                        info="Chọn dịch vụ bạn muốn sử dụng"
+                    )
+                    quick_product_id = gr.Textbox(
+                        label="Product ID",
+                        value="001",
+                        placeholder="Nhập Product ID (ví dụ: 001, 050, 100)..."
+                    )
+                    quick_predict_btn = gr.Button("🎯 Dự Đoán Nhanh", variant="primary")
+                
+                with gr.Column():
+                    quick_output = gr.Markdown()
         
-        predict_btn.click(
-            fn=predictor_ui.predict_price,
+        # Tab 2: Dự đoán linh hoạt
+        with gr.Tab("🎛️ Dự Đoán Linh Hoạt"):
+            gr.Markdown("### Dự đoán linh hoạt với nhiều dịch vụ")
+            
+            with gr.Row():
+                with gr.Column():
+                    # Service selection
+                    services = gr.CheckboxGroup(
+                        choices=[
+                            ("🤖 Smart Recommender", "recommender"),
+                            ("💰 Value Detector", "value_detector"), 
+                            ("📸 Camera Predictor", "camera_predictor")
+                        ],
+                        label="Chọn Dịch Vụ",
+                        value=["recommender"],
+                        info="Chọn một hoặc nhiều dịch vụ"
+                    )
+                    
+                    # Input method
+                    input_method = gr.Radio(
+                        choices=[
+                            ("📁 Feature Store", "feature_store"),
+                            ("⌨️ Manual Input", "manual")
+                        ],
+                        label="Phương Thức Nhập Liệu",
+                        value="feature_store"
+                    )
+                    
+                    # Product ID input (visible when feature_store selected)
+                    product_id = gr.Textbox(
+                        label="Product ID",
+                        value="001",
+                        visible=True,
+                        placeholder="Nhập Product ID..."
+                    )
+                    
+                    # Manual inputs container (visible when manual selected)
+                    with gr.Column(visible=False) as manual_inputs_container:
+                        gr.Markdown("### 📝 Nhập Thông Số Thủ Công")
+                        
+                        with gr.Accordion("📊 Display Features", open=True):
+                            flex_screen_size = gr.Number(label="Screen Size (inches)", value=6.1)
+                            flex_ppi = gr.Number(label="PPI (Pixels Per Inch)", value=460)
+                            flex_total_resolution = gr.Number(label="Total Resolution", value=2430000)
+                        
+                        with gr.Accordion("📸 Camera Features", open=False):
+                            flex_camera_score = gr.Number(label="Camera Score", value=65.0)
+                            flex_main_camera_mp = gr.Number(label="Main Camera (MP)", value=48.0)
+                            flex_num_cameras = gr.Number(label="Number of Cameras", value=3)
+                            flex_has_telephoto = gr.Radio(choices=[0, 1], label="Has Telephoto", value=1)
+                            flex_has_ultrawide = gr.Radio(choices=[0, 1], label="Has Ultrawide", value=1)
+                            flex_has_ois = gr.Radio(choices=[0, 1], label="Has OIS", value=1)
+                            flex_camera_feature_count = gr.Number(label="Camera Feature Count", value=2)
+                        
+                        with gr.Accordion("⭐ Rating Features", open=False):
+                            flex_popularity_score = gr.Number(label="Popularity Score", value=60.0)
+                            flex_overall_score = gr.Number(label="Overall Score", value=55.0)
+                            flex_display_score = gr.Number(label="Display Score", value=70.0)
+                            flex_camera_rating = gr.Number(label="Camera Rating", value=3.5)
+                        
+                        with gr.Accordion("💰 Value Features", open=False):
+                            flex_value_score = gr.Number(label="Value Score", value=6.5)
+                            flex_price_segment = gr.Radio(choices=[0, 1, 2], label="Price Segment (0=Budget, 1=Mid, 2=Premium)", value=1)
+                            flex_is_premium = gr.Radio(choices=[0, 1], label="Is Premium", value=0)
+                        
+                        with gr.Accordion("📦 Product Features", open=False):
+                            flex_has_warranty = gr.Radio(choices=[0, 1], label="Has Warranty", value=1)
+                            flex_number_of_review = gr.Number(label="Number of Reviews", value=120)
+            
+                    flexible_predict_btn = gr.Button("🎯 Thực Hiện Dự Đoán", variant="primary")
+                
+                with gr.Column():
+                    flexible_output = gr.Markdown()
+        
+        # Tab 3: Manual Input (chuyên sâu)
+        with gr.Tab("⌨️ Nhập Liệu Thủ Công"):
+            gr.Markdown("### Nhập thông số điện thoại thủ công")
+            gr.Markdown("Điền các thông số bên dưới để dự đoán (chỉ cần nhập các features cần thiết cho dịch vụ đã chọn)")
+            
+            with gr.Row():
+                with gr.Column():
+                    manual_services = gr.CheckboxGroup(
+                        choices=[
+                            ("🤖 Smart Recommender", "recommender"),
+                            ("💰 Value Detector", "value_detector"), 
+                            ("📸 Camera Predictor", "camera_predictor")
+                        ],
+                        label="Chọn Dịch Vụ",
+                        value=["recommender"]
+                    )
+            
+            with gr.Row():
+                with gr.Column():
+                    with gr.Accordion("📊 Display Features", open=True):
+                        manual_screen_size = gr.Number(label="Screen Size (inches)", value=6.1)
+                        manual_ppi = gr.Number(label="PPI (Pixels Per Inch)", value=460)
+                        manual_total_resolution = gr.Number(label="Total Resolution", value=2430000)
+                    
+                    with gr.Accordion("📸 Camera Features", open=False):
+                        manual_camera_score = gr.Number(label="Camera Score", value=65.0)
+                        manual_main_camera_mp = gr.Number(label="Main Camera (MP)", value=48.0)
+                        manual_num_cameras = gr.Number(label="Number of Cameras", value=3)
+                        manual_has_telephoto = gr.Radio(choices=[0, 1], label="Has Telephoto", value=1)
+                        manual_has_ultrawide = gr.Radio(choices=[0, 1], label="Has Ultrawide", value=1)
+                        manual_has_ois = gr.Radio(choices=[0, 1], label="Has OIS", value=1)
+                        manual_camera_feature_count = gr.Number(label="Camera Feature Count", value=2)
+                
+                with gr.Column():
+                    with gr.Accordion("⭐ Rating Features", open=False):
+                        manual_popularity_score = gr.Number(label="Popularity Score", value=60.0)
+                        manual_overall_score = gr.Number(label="Overall Score", value=55.0)
+                        manual_display_score = gr.Number(label="Display Score", value=70.0)
+                        manual_camera_rating = gr.Number(label="Camera Rating", value=3.5)
+                    
+                    with gr.Accordion("💰 Value Features", open=False):
+                        manual_value_score = gr.Number(label="Value Score", value=6.5)
+                        manual_price_segment = gr.Radio(choices=[0, 1, 2], label="Price Segment (0=Budget, 1=Mid, 2=Premium)", value=1)
+                        manual_is_premium = gr.Radio(choices=[0, 1], label="Is Premium", value=0)
+                    
+                    with gr.Accordion("📦 Product Features", open=False):
+                        manual_has_warranty = gr.Radio(choices=[0, 1], label="Has Warranty", value=1)
+                        manual_number_of_review = gr.Number(label="Number of Reviews", value=120)
+            
+            with gr.Row():
+                manual_predict_btn = gr.Button("🎯 Dự Đoán Từ Manual Input", variant="primary", size="lg")
+            
+            manual_output = gr.Markdown()
+        
+        # Tab 4: Thông tin hệ thống
+        with gr.Tab("ℹ️ Thông Tin Hệ Thống"):
+            gr.Markdown("### Thông tin về các dịch vụ dự đoán")
+            
+            services_info = app.get_services_info()
+            
+            if services_info:
+                for service_name, info in services_info.items():
+                    with gr.Accordion(f"🔧 {service_name.upper()}", open=False):
+                        gr.Markdown(f"**Đầu ra:** {info['output']}")
+                        gr.Markdown(f"**Số features:** {info['feature_count']}")
+                        gr.Markdown("**Features cần thiết:**")
+                        
+                        features_df = pd.DataFrame({
+                            'Feature': info['required_features'],
+                            'Type': ['Number' if any(c in f for c in ['Score', 'Size', 'PPI', 'mp', 'resolution']) else 
+                                    'Binary' if 'has_' in f else 
+                                    'Category' for f in info['required_features']]
+                        })
+                        
+                        gr.Dataframe(features_df)
+            else:
+                gr.Markdown("❌ Không thể kết nối đến API. Vui lòng kiểm tra server.")
+            
+            gr.Markdown("---")
+            gr.Markdown("### 📊 API Status")
+            api_status = gr.HTML()
+            
+            def check_api_status():
+                try:
+                    response = requests.get(f"{API_URL}/health")
+                    if response.status_code == 200:
+                        data = response.json()
+                        status_html = f"""
+                        <div class="success-box">
+                            <h3>✅ API Đang Hoạt Động</h3>
+                            <p><strong>Status:</strong> {data['status']}</p>
+                            <p><strong>Models loaded:</strong> {data['models_loaded']}</p>
+                            <p><strong>Services:</strong> {', '.join(data['available_services'])}</p>
+                        </div>
+                        """
+                    else:
+                        status_html = f"<div class='error-box'><h3>❌ API Lỗi: {response.status_code}</h3></div>"
+                except:
+                    status_html = "<div class='error-box'><h3>❌ Không thể kết nối đến API</h3><p>Vui lòng kiểm tra server tại http://localhost:8000</p></div>"
+                
+                return status_html
+            
+            # Khởi tạo API status khi load page
+            demo.load(check_api_status, outputs=api_status)
+            gr.Button("🔄 Kiểm Tra Lại").click(check_api_status, outputs=api_status)
+        
+        # Event handlers
+        def handle_quick_prediction(service, product_id):
+            """Xử lý dự đoán nhanh"""
+            result = app.predict_single_service(service, product_id)
+            return format_predictions(result)
+        
+        def toggle_input_method(input_method):
+            """Hiển thị input phù hợp với phương thức được chọn"""
+            if input_method == "feature_store":
+                return [
+                    gr.Textbox(visible=True),  # product_id
+                    gr.Column(visible=False)   # manual_inputs_container
+                ]
+            else:
+                return [
+                    gr.Textbox(visible=False), # product_id  
+                    gr.Column(visible=True)    # manual_inputs_container
+                ]
+        
+        def handle_flexible_prediction(services, input_method, product_id, 
+                                     flex_screen_size, flex_ppi, flex_total_resolution,
+                                     flex_camera_score, flex_main_camera_mp, flex_num_cameras,
+                                     flex_has_telephoto, flex_has_ultrawide, flex_has_ois,
+                                     flex_camera_feature_count, flex_popularity_score,
+                                     flex_overall_score, flex_display_score, flex_camera_rating,
+                                     flex_value_score, flex_price_segment, flex_is_premium,
+                                     flex_has_warranty, flex_number_of_review):
+            """Xử lý dự đoán linh hoạt với cả 2 phương thức input"""
+            if input_method == "feature_store":
+                result = app.predict_flexible(services, input_method, product_id, {})
+            else:
+                # Manual input - thu thập tất cả features
+                manual_features = {
+                    "ScreenSize": flex_screen_size,
+                    "PPI": flex_ppi,
+                    "total_resolution": flex_total_resolution,
+                    "camera_score": flex_camera_score,
+                    "main_camera_mp": flex_main_camera_mp,
+                    "num_cameras": flex_num_cameras,
+                    "has_telephoto": flex_has_telephoto,
+                    "has_ultrawide": flex_has_ultrawide,
+                    "has_ois": flex_has_ois,
+                    "camera_feature_count": flex_camera_feature_count,
+                    "popularity_score": flex_popularity_score,
+                    "overall_score": flex_overall_score,
+                    "display_score": flex_display_score,
+                    "camera_rating": flex_camera_rating,
+                    "value_score": flex_value_score,
+                    "price_segment": flex_price_segment,
+                    "is_premium": flex_is_premium,
+                    "has_warranty": flex_has_warranty,
+                    "NumberOfReview": flex_number_of_review
+                }
+                # Loại bỏ các giá trị None
+                manual_features = {k: v for k, v in manual_features.items() if v is not None}
+                result = app.predict_flexible(services, input_method, "", manual_features)
+            
+            return format_predictions(result)
+        
+        def handle_manual_prediction(services, 
+                                   manual_screen_size, manual_ppi, manual_total_resolution,
+                                   manual_camera_score, manual_main_camera_mp, manual_num_cameras,
+                                   manual_has_telephoto, manual_has_ultrawide, manual_has_ois,
+                                   manual_camera_feature_count, manual_popularity_score,
+                                   manual_overall_score, manual_display_score, manual_camera_rating,
+                                   manual_value_score, manual_price_segment, manual_is_premium,
+                                   manual_has_warranty, manual_number_of_review):
+            """Xử lý dự đoán từ manual input chuyên sâu"""
+            # Thu thập tất cả features
+            manual_features = {
+                "ScreenSize": manual_screen_size,
+                "PPI": manual_ppi,
+                "total_resolution": manual_total_resolution,
+                "camera_score": manual_camera_score,
+                "main_camera_mp": manual_main_camera_mp,
+                "num_cameras": manual_num_cameras,
+                "has_telephoto": manual_has_telephoto,
+                "has_ultrawide": manual_has_ultrawide,
+                "has_ois": manual_has_ois,
+                "camera_feature_count": manual_camera_feature_count,
+                "popularity_score": manual_popularity_score,
+                "overall_score": manual_overall_score,
+                "display_score": manual_display_score,
+                "camera_rating": manual_camera_rating,
+                "value_score": manual_value_score,
+                "price_segment": manual_price_segment,
+                "is_premium": manual_is_premium,
+                "has_warranty": manual_has_warranty,
+                "NumberOfReview": manual_number_of_review
+            }
+            # Loại bỏ các giá trị None
+            manual_features = {k: v for k, v in manual_features.items() if v is not None}
+            result = app.predict_flexible(services, "manual", "", manual_features)
+            return format_predictions(result)
+        
+        # Bind events
+        
+        # Tab 1: Dự đoán nhanh
+        quick_predict_btn.click(
+            handle_quick_prediction,
+            inputs=[quick_service, quick_product_id],
+            outputs=quick_output
+        )
+        
+        # Tab 2: Dự đoán linh hoạt
+        input_method.change(
+            toggle_input_method,
+            inputs=input_method,
+            outputs=[product_id, manual_inputs_container]
+        )
+        
+        flexible_predict_btn.click(
+            handle_flexible_prediction,
             inputs=[
-                screen_size, resolution_width, resolution_height, main_camera_mp,
-                num_cameras, has_telephoto, has_ultrawide, has_ois, has_warranty,
-                number_of_reviews, model_name
+                services, input_method, product_id,
+                flex_screen_size, flex_ppi, flex_total_resolution,
+                flex_camera_score, flex_main_camera_mp, flex_num_cameras,
+                flex_has_telephoto, flex_has_ultrawide, flex_has_ois,
+                flex_camera_feature_count, flex_popularity_score,
+                flex_overall_score, flex_display_score, flex_camera_rating,
+                flex_value_score, flex_price_segment, flex_is_premium,
+                flex_has_warranty, flex_number_of_review
             ],
-            outputs=[result_output, model_used, confidence, processing_time, product_id]
+            outputs=flexible_output
+        )
+        
+        # Tab 3: Manual input chuyên sâu
+        manual_predict_btn.click(
+            handle_manual_prediction,
+            inputs=[
+                manual_services,
+                manual_screen_size, manual_ppi, manual_total_resolution,
+                manual_camera_score, manual_main_camera_mp, manual_num_cameras,
+                manual_has_telephoto, manual_has_ultrawide, manual_has_ois,
+                manual_camera_feature_count, manual_popularity_score,
+                manual_overall_score, manual_display_score, manual_camera_rating,
+                manual_value_score, manual_price_segment, manual_is_premium,
+                manual_has_warranty, manual_number_of_review
+            ],
+            outputs=manual_output
+        )
+        
+        gr.Markdown("---")
+        gr.Markdown(
+            """
+            ### 💡 Hướng Dẫn Sử Dụng:
+            
+            #### 🚀 Dự Đoán Nhanh:
+            - Chọn một dịch vụ và nhập Product ID
+            - Product ID hợp lệ: 001, 002, ..., 100 (từ dữ liệu training)
+            
+            #### 🎛️ Dự Đoán Linh Hoạt:
+            - **Feature Store**: Chọn nhiều dịch vụ + nhập Product ID
+            - **Manual Input**: Chọn nhiều dịch vụ + nhập thông số thủ công
+            
+            #### ⌨️ Nhập Liệu Thủ Công:
+            - Form chuyên sâu để nhập tất cả thông số
+            - Phù hợp khi không có Product ID
+            
+            🚀 *Hệ thống sử dụng Machine Learning để dự đoán với độ chính xác cao*
+            """
         )
     
-    return interface
+    return demo
 
 if __name__ == "__main__":
-    print("🚀 Khởi động Phone Price Predictor UI...")
-    print(f"🌐 API URL: {API_URL}")
+    # Kiểm tra phiên bản Gradio
+    import gradio as gr
+    print(f"🚀 Gradio version: {gr.__version__}")
     
-    interface = create_interface()
-    interface.launch(
-        server_name="0.0.0.0", 
-        server_port=7860,
+    demo = create_gradio_interface()
+    print("✅ Gradio interface created successfully!")
+    print("🌐 Starting server on http://localhost:7869")
+    print("📱 Available tabs:")
+    print("   - 🚀 Dự Đoán Nhanh")
+    print("   - 🎛️ Dự Đoán Linh Hoạt") 
+    print("   - ⌨️ Nhập Liệu Thủ Công")
+    print("   - ℹ️ Thông Tin Hệ Thống")
+    
+    demo.launch(
+        server_name="0.0.0.0",
+        server_port=7870,
         share=False,
         show_error=True
     )

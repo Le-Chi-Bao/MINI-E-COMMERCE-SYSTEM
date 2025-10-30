@@ -1,35 +1,14 @@
 
-\
-<
-phoneA smartphone product"
-product_idJmy_phone_features
-÷‡ˆÈ°†À÷‡ˆÈ°†À
 H
 (
 __dummy"
 __dummy_idJmy_phone_features
-÷‡ˆÈ°†À÷‡ˆÈ°†À1"$1c3ba227-c09f-4a36-b962-92e7dd0bbeae*ÿíˆÈ€Ñê¤2–
-õ
-phone_cameramy_phone_featuresphone"
-main_camera_mp"
-num_cameras"
-has_telephoto"
-has_ultrawide"
-has_ois"
-camera_feature_count"
-camera_score*
-teamcamera2€ç„:event_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquetŠ1feast.infra.offline_stores.file_source.FileSource¢phone_data_source@b
-
-product_id
-÷‡ˆÈ°†À÷‡ˆÈ°†À2º
-™
-phone_productmy_phone_featuresphone"
-NumberOfReview"
-has_warranty*
-teamproduct2€ÎÚ:event_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquetŠ1feast.infra.offline_stores.file_source.FileSource¢phone_data_source@b
-
-product_id
-÷‡ˆÈ°†À÷‡ˆÈ°†À2â
+ä’ŽÈÈÍÜÛä’ŽÈÈÍÜÛ
+\
+<
+phoneA smartphone product"
+product_idJmy_phone_features
+ä’ŽÈÈÍÜÛä’ŽÈÈÍÜÛ1"$7cd277c2-ae63-4f68-8088-894309c5f26a*ê”ŽÈñ¾–2ô
 Á
 phone_displaymy_phone_featuresphone"
 
@@ -41,18 +20,80 @@ Res_Height"
 total_resolution*
 teamdisplay2€ç„:event_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquetŠ1feast.infra.offline_stores.file_source.FileSource¢phone_data_source@b
 
-product_id
-÷‡ˆÈ°†À÷‡ˆÈ°†À:Â
-¡
-pricing_servicemy_phone_featuresî
-phone_display
+product_id.
+ä’ŽÈÈÍÜÛê”ŽÈè½„É
+€È¬€ÕŠÈ2Ö
+£
+phone_valuemy_phone_featuresphone"
+value_score"
 
-ScreenSize
-	Res_Width
+is_premium"
+price_segment*
+teamvalue2€œµ:event_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquetŠ1feast.infra.offline_stores.file_source.FileSource¢phone_data_source@b
 
-Res_Height
-PPI
-total_resolution*created_timestamp:created_timestampBievent_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquet¢phone_data_source£
+product_id.
+ä’ŽÈ ˜€Üê”ŽÈ°ÐÚû
+€È¬€ÕŠÈ2¨
+õ
+phone_cameramy_phone_featuresphone"
+main_camera_mp"
+num_cameras"
+has_telephoto"
+has_ultrawide"
+has_ois"
+camera_feature_count"
+camera_score*
+teamcamera2€ç„:event_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquetŠ1feast.infra.offline_stores.file_source.FileSource¢phone_data_source@b
+
+product_id.
+ä’ŽÈ ˜€Üê”ŽÈøå—¶
+€È¬€ÕŠÈ2Ì
+™
+phone_productmy_phone_featuresphone"
+NumberOfReview"
+has_warranty*
+teamproduct2€ÎÚ:event_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquetŠ1feast.infra.offline_stores.file_source.FileSource¢phone_data_source@b
+
+product_id.
+ä’ŽÈ ˜€Üê”ŽÈÀ™ìå
+€È¬€ÕŠÈ2õ
+Â
+phone_ratingsmy_phone_featuresphone"
+camera_rating"
+display_score"
+popularity_score"
+overall_score*
+teamratings2€œµ:event_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquetŠ1feast.infra.offline_stores.file_source.FileSource¢phone_data_source@b
+
+product_id.
+ä’ŽÈ ˜€Üê”ŽÈñ¾–
+€È¬€ÕŠÈ:ù
+Ø
+value_for_money_detectormy_phone_featuresÒ
+phone_value
+value_score
+
+is_premium
+price_segment*created_timestamp:created_timestampBievent_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquet¢phone_data_sourceÙ
+phone_ratings
+overall_score
+display_score
+camera_rating*created_timestamp:created_timestampBievent_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquet¢phone_data_source¹
+phone_display
+PPI
+
+ScreenSize*created_timestamp:created_timestampBievent_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquet¢phone_data_sourceÅ
+phone_camera
+camera_score
+main_camera_mp*created_timestamp:created_timestampBievent_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquet¢phone_data_source´
+phone_product
+NumberOfReview*created_timestamp:created_timestampBievent_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquet¢phone_data_source"
+team	analytics"
+purposevalue_analysis"
+latencyfast
+ä’ŽÈ ˜€Üä’ŽÈ ˜€Ü:É	
+¨	
+camera_enthusiast_predictormy_phone_features£
 phone_camera
 main_camera_mp
 num_cameras
@@ -61,11 +102,49 @@ Res_Height
 has_ois
 camera_feature_count
 camera_score*created_timestamp:created_timestampBievent_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquet¢phone_data_sourceÆ
+phone_ratings
+camera_rating
+overall_score*created_timestamp:created_timestampBievent_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquet¢phone_data_sourceÏ
+phone_display
+PPI
+total_resolution
+
+ScreenSize*created_timestamp:created_timestampBievent_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquet¢phone_data_source¿
+phone_value
+value_score
+
+is_premium*created_timestamp:created_timestampBievent_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquet¢phone_data_source´
 phone_product
-NumberOfReview
-has_warranty*created_timestamp:created_timestampBievent_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquet¢phone_data_source"
-purposeprice_prediction
-÷‡ˆÈ€Öþ÷‡ˆÈ€ÖþRõ
+NumberOfReview*created_timestamp:created_timestampBievent_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquet¢phone_data_source"
+teamcamera"
+purposecamera_focused"
+latencymedium
+ä’ŽÈ ˜€Üä’ŽÈ ˜€Ü:¥	
+„	
+smart_phone_recommendermy_phone_featuresÏ
+phone_display
+
+ScreenSize
+PPI
+total_resolution*created_timestamp:created_timestampBievent_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquet¢phone_data_source×
+phone_camera
+camera_score
+has_telephoto
+has_ultrawide*created_timestamp:created_timestampBievent_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquet¢phone_data_sourceÜ
+phone_ratings
+overall_score
+camera_rating
+popularity_score*created_timestamp:created_timestampBievent_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquet¢phone_data_sourceÂ
+phone_value
+value_score
+price_segment*created_timestamp:created_timestampBievent_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquet¢phone_data_sourceÆ
+phone_product
+has_warranty
+NumberOfReview*created_timestamp:created_timestampBievent_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquet¢phone_data_source"
+teamproduct"
+purposerecommendation"
+latencymedium
+ä’ŽÈ Û½Üä’ŽÈ Û½ÜR—
 Î
 ,feast.infra.online_stores.sqlite.SqliteTable"
 {C:\Users\ADMIN\OneDrive\Desktop\CÃ¡c mÃ´n há»c nÄƒm 2\software engreneering\Project\my_phone_features\data\online_store.dbmy_phone_features_phone_camera
@@ -74,7 +153,13 @@ Res_Height
 {C:\Users\ADMIN\OneDrive\Desktop\CÃ¡c mÃ´n há»c nÄƒm 2\software engreneering\Project\my_phone_features\data\online_store.dbmy_phone_features_phone_display
 Ï
 ,feast.infra.online_stores.sqlite.SqliteTable"ž
-{C:\Users\ADMIN\OneDrive\Desktop\CÃ¡c mÃ´n há»c nÄƒm 2\software engreneering\Project\my_phone_features\data\online_store.dbmy_phone_features_phone_productb±event_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquetŠ1feast.infra.offline_stores.file_source.FileSource¢phone_data_sourceªmy_phone_featuresŠ1
+{C:\Users\ADMIN\OneDrive\Desktop\CÃ¡c mÃ´n há»c nÄƒm 2\software engreneering\Project\my_phone_features\data\online_store.dbmy_phone_features_phone_product
+Ï
+,feast.infra.online_stores.sqlite.SqliteTable"ž
+{C:\Users\ADMIN\OneDrive\Desktop\CÃ¡c mÃ´n há»c nÄƒm 2\software engreneering\Project\my_phone_features\data\online_store.dbmy_phone_features_phone_ratings
+Í
+,feast.infra.online_stores.sqlite.SqliteTable"œ
+{C:\Users\ADMIN\OneDrive\Desktop\CÃ¡c mÃ´n há»c nÄƒm 2\software engreneering\Project\my_phone_features\data\online_store.dbmy_phone_features_phone_valueb±event_timestamp*created_timestampZ-+data/processed/phone_data_processed.parquetŠ1feast.infra.offline_stores.file_source.FileSource¢phone_data_sourceªmy_phone_featuresŠ3
 
-my_phone_features
-÷‡ˆÈà”i÷‡ˆÈà”i
+my_phone_features
+ä’ŽÈèóÒ¦ä’ŽÈèóÒ¦
