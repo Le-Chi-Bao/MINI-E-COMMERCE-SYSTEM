@@ -1,4 +1,4 @@
-# docker-compose.yml
+# docker-compose.yml - SỬA THÀNH
 services:
   # FastAPI Backend
   api:
@@ -10,11 +10,13 @@ services:
       - ./models:/app/models
       - ./my_phone_features:/app/my_phone_features
       - ./Data:/app/Data
+      - ./api:/app/api
+      - ./scripts:/app/scripts
     environment:
       - ENVIRONMENT=production
       - MODELS_PATH=/app/models
       - FEATURE_STORE_PATH=/app/my_phone_features
-    command: python api/phone_api.py  # 👈 QUAN TRỌNG: override command
+    command: python /app/api/phone_api.py
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -22,17 +24,26 @@ services:
       retries: 3
       start_period: 40s
     restart: unless-stopped
+    networks:
+      - phone-network
 
   # Gradio Frontend
   web:
     build: .
     container_name: phone-prediction-web
     ports:
-      - "7869:7869"
-    environment:
-      - API_URL=http://api:8000
-    command: python web/gradio_app.py  # 👈 QUAN TRỌNG: override command
+      - "7876:7876"  # 👈 Khớp với server_port=7876
+    volumes:
+      - ./web:/app/web
+    # 👇 KHÔNG CẦN environment API_URL vì code dùng localhost:8000
+    command: python /app/web/gradio_app.py
     depends_on:
       api:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - phone-network
+
+networks:
+  phone-network:
+    driver: bridge

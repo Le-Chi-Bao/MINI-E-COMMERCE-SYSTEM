@@ -25,7 +25,7 @@ COPY . .
 RUN find /app -type d -name "api" -o -name "web" | xargs -I {} touch {}/__init__.py
 
 # Expose ports
-EXPOSE 8000 7869
+EXPOSE 8000 7860
 
 # Default command (sẽ được override trong docker-compose)
 CMD ["echo", "Use docker-compose to start individual services"]

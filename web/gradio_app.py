@@ -1,13 +1,11 @@
-# web/gradio_app.py
-import os
 import gradio as gr
 import requests
+import json
 import pandas as pd
 from typing import Dict, List
 
-# API configuration - use environment variable with fallback
-API_URL = os.getenv("API_URL", "http://localhost:8000")
-print(f"🔗 Connecting to API at: {API_URL}")
+# API configuration
+API_URL = "http://api:8000"
 
 class PhonePredictionApp:
     def __init__(self):
@@ -16,27 +14,20 @@ class PhonePredictionApp:
     def get_services_info(self):
         """Lấy thông tin về các dịch vụ từ API"""
         try:
-            # Increase timeout for Docker environment
-            response = requests.get(f"{self.api_url}/services", timeout=30)
+            response = requests.get(f"{self.api_url}/services")
             if response.status_code == 200:
                 return response.json()['services']
-            print(f"❌ API error: {response.status_code}")
             return {}
-        except requests.exceptions.ConnectionError:
-            return {"error": f"Không thể kết nối đến API tại {self.api_url}"}
-        except Exception as e:
-            print(f"❌ Connection error: {e}")
+        except:
             return {}
     
     def predict_single_service(self, service: str, product_id: str):
         """Dự đoán cho một service"""
         try:
-            response = requests.get(f"{self.api_url}/predict/{service}/{product_id}", timeout=30)
+            response = requests.get(f"{self.api_url}/predict/{service}/{product_id}")
             if response.status_code == 200:
                 return response.json()
             return {"error": f"API error: {response.status_code}"}
-        except requests.exceptions.ConnectionError:
-            return {"error": f"Không thể kết nối đến API tại {self.api_url}"}
         except Exception as e:
             return {"error": f"Connection error: {str(e)}"}
     
@@ -53,19 +44,15 @@ class PhonePredictionApp:
             else:
                 payload["manual_features"] = manual_features
             
-            response = requests.post(f"{self.api_url}/predict", json=payload, timeout=30)
+            response = requests.post(f"{self.api_url}/predict", json=payload)
             if response.status_code == 200:
                 return response.json()
             else:
                 error_detail = response.json().get('detail', 'Unknown error')
                 return {"error": f"API error: {error_detail}"}
                 
-        except requests.exceptions.ConnectionError:
-            return {"error": f"Không thể kết nối đến API tại {self.api_url}"}
         except Exception as e:
             return {"error": f"Connection error: {str(e)}"}
-
-# ... (phần còn lại của code gradio giữ nguyên)
 
 def format_predictions(result):
     """Định dạng kết quả dự đoán"""
@@ -509,7 +496,7 @@ if __name__ == "__main__":
     
     demo.launch(
         server_name="0.0.0.0",
-        server_port=7870,
+        server_port=7876,
         share=False,
         show_error=True
     )
