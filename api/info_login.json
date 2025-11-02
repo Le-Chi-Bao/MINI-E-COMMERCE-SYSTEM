@@ -1,0 +1,44 @@
+{
+    "admin": {
+        "password": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
+        "email": "admin@system.com",
+        "created_at": "2025-11-02 18:31:01",
+        "role": "admin"
+    },
+    "dung bình": {
+        "password": "acf3d056d4cb96f49019cd73cf7dc23fb67e158bdab3808f2eed9d2a3a459c51",
+        "email": "dungbinh@gmail.com",
+        "created_at": "2025-11-02 18:35:01",
+        "role": "user"
+    },
+    "chí bảo": {
+        "password": "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5",
+        "email": "dungbinh@gmail.com",
+        "created_at": "2025-11-02 18:36:36",
+        "role": "user"
+    },
+    "Chi Bao": {
+        "password": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+        "email": "baodang.@gmail.com",
+        "created_at": "2025-11-02 18:52:14",
+        "role": "user"
+    },
+    "On Thanh Cong": {
+        "password": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
+        "email": "cong@gmail.com",
+        "created_at": "2025-11-02 18:53:52",
+        "role": "user"
+    },
+    "On Thanh cong": {
+        "password": "edee29f882543b956620b26d0ee0e7e950399b1c4222f5de05e06425b4c995e9",
+        "email": "cong@gmail.com",
+        "created_at": "2025-11-02 18:54:30",
+        "role": "user"
+    },
+    "Thanh cong": {
+        "password": "edee29f882543b956620b26d0ee0e7e950399b1c4222f5de05e06425b4c995e9",
+        "email": "cong@gmail.com",
+        "created_at": "2025-11-02 18:54:53",
+        "role": "user"
+    }
+}

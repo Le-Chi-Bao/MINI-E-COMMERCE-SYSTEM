@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 import pandas as pd
 import joblib
@@ -6,6 +7,7 @@ from feast import FeatureStore
 import os
 from typing import Dict, Any, List, Optional
 from enum import Enum
+from auth import auth_system
 
 # Khởi tạo FastAPI app
 app = FastAPI(
@@ -13,6 +15,9 @@ app = FastAPI(
     description="API for predicting phone features using ML models with flexible service selection",
     version="1.0.0"
 )
+
+# Security
+security = HTTPBearer()
 
 # 🆕 Enum cho các dịch vụ dự đoán
 class PredictionService(str, Enum):
@@ -26,12 +31,35 @@ class InputMethod(str, Enum):
     FEATURE_STORE = "feature_store"
     MANUAL = "manual"
 
+# 🆕 Models cho authentication
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
+    email: Optional[str] = None
+
+class AuthResponse(BaseModel):
+    success: bool
+    message: str
+    user_info: Optional[Dict] = None
+
 # Khởi tạo đường dẫn
 current_dir = os.path.dirname(os.path.abspath(__file__))
 repo_path = os.path.join(current_dir, "..", "my_phone_features")
 models_path = os.path.join(current_dir, "..", "models")
 
-# Khởi tạo predictor
+# Dependency để xác thực user
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Xác thực user đơn giản - trong thực tế nên dùng JWT"""
+    username = credentials.credentials
+    if username not in auth_system.users:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return username
+
+# Khởi tạo predictor (giữ nguyên)
 class PhonePredictor:
     def __init__(self):
         try:
@@ -51,7 +79,7 @@ class PhonePredictor:
                 'camera_predictor': joblib.load(os.path.join(models_path, "scaler_camera.pkl"))
             }
             
-            # 🆕 Feature requirements cho từng service
+            # Feature requirements cho từng service
             self.service_requirements = {
                 'recommender': {
                     'features': [
@@ -113,7 +141,7 @@ class PhonePredictor:
         for service in services:
             if service in self.service_requirements:
                 all_features.extend(self.service_requirements[service]['feature_refs'])
-        return list(set(all_features))  # Remove duplicates
+        return list(set(all_features))
 
     def predict_service(self, service: str, feature_data: pd.DataFrame) -> Dict[str, Any]:
         """Dự đoán cho một service cụ thể"""
@@ -147,7 +175,6 @@ class PhonePredictor:
 
     def predict_manual(self, services: List[str], manual_features: Dict[str, float]) -> Dict[str, Any]:
         """Dự đoán với features nhập thủ công"""
-        # Tạo DataFrame từ manual features
         feature_data = pd.DataFrame([manual_features])
         
         # Kiểm tra xem có đủ features không
@@ -169,7 +196,6 @@ class PhonePredictor:
 
     def predict_feature_store(self, services: List[str], product_id: str) -> Dict[str, Any]:
         """Dự đoán với features từ Feature Store"""
-        # Lấy features cần thiết
         required_features = self.get_required_features(services)
         
         feature_data = self.fs.get_online_features(
@@ -177,7 +203,6 @@ class PhonePredictor:
             features=required_features
         ).to_df()
 
-        # Thực hiện dự đoán
         results = {}
         for service in services:
             results.update(self.predict_service(service, feature_data))
@@ -187,9 +212,8 @@ class PhonePredictor:
 # Khởi tạo predictor
 predictor = PhonePredictor()
 
-# 🆕 Pydantic models
+# Pydantic models (giữ nguyên)
 class ManualFeatures(BaseModel):
-    # Features cho Recommender
     ScreenSize: Optional[float] = None
     PPI: Optional[float] = None
     total_resolution: Optional[float] = None
@@ -201,14 +225,10 @@ class ManualFeatures(BaseModel):
     price_segment: Optional[int] = None
     has_warranty: Optional[int] = None
     NumberOfReview: Optional[int] = None
-    
-    # Features cho Value Detector
     overall_score: Optional[float] = None
     display_score: Optional[float] = None
     camera_rating: Optional[float] = None
     main_camera_mp: Optional[float] = None
-    
-    # Features cho Camera Predictor
     num_cameras: Optional[int] = None
     has_ois: Optional[int] = None
     camera_feature_count: Optional[int] = None
@@ -225,15 +245,49 @@ class PredictionResponse(BaseModel):
     predictions: Dict[str, Any]
     input_method: str
     status: str
+    user: Optional[str] = None
 
-# Routes
+# 🆕 Authentication Routes - ĐÃ FIX LỖI
+@app.post("/auth/login", response_model=AuthResponse)
+async def login(request: LoginRequest):
+    """Đăng nhập"""
+    try:
+        result = auth_system.login(request.username, request.password)
+        return result
+    except Exception as e:
+        print(f"❌ Login error: {e}")
+        raise HTTPException(status_code=500, detail=f"Lỗi server: {str(e)}")
+
+@app.post("/auth/register", response_model=AuthResponse)
+async def register(request: RegisterRequest):
+    """Đăng ký tài khoản mới"""
+    try:
+        result = auth_system.register(request.username, request.password, request.email)
+        return result
+    except Exception as e:
+        print(f"❌ Register error: {e}")
+        raise HTTPException(status_code=500, detail=f"Lỗi server: {str(e)}")
+
+@app.get("/auth/users")
+async def get_users(current_user: str = Depends(get_current_user)):
+    """Lấy danh sách users (chỉ admin)"""
+    try:
+        if auth_system.users.get(current_user, {}).get("role") != "admin":
+            raise HTTPException(status_code=403, detail="Không có quyền truy cập")
+        return auth_system.get_all_users()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi server: {str(e)}")
+
+# Routes (giữ nguyên)
 @app.get("/")
 async def root():
     return {
-        "message": "Flexible Phone Prediction API", 
+        "message": "Flexible Phone Prediction API with Authentication", 
         "version": "1.0.0",
         "available_services": [service.value for service in PredictionService],
         "endpoints": {
+            "auth_login": "/auth/login",
+            "auth_register": "/auth/register",
             "health_check": "/health",
             "services_info": "/services",
             "predict": "/predict"
@@ -245,7 +299,8 @@ async def health_check():
     return {
         "status": "healthy", 
         "models_loaded": len(predictor.models),
-        "available_services": list(predictor.service_requirements.keys())
+        "available_services": list(predictor.service_requirements.keys()),
+        "total_users": len(auth_system.users)
     }
 
 @app.get("/services")
@@ -265,17 +320,15 @@ async def get_services_info():
     }
 
 @app.post("/predict", response_model=PredictionResponse)
-async def predict_phone(request: PredictionRequest):
+async def predict_phone(request: PredictionRequest, current_user: str = Depends(get_current_user)):
     """Dự đoán linh hoạt với các service được chọn"""
-    print(f"📥 Prediction request - Services: {request.services}, Method: {request.input_method}")
+    print(f"📥 Prediction request from user: {current_user} - Services: {request.services}, Method: {request.input_method}")
     
     try:
-        # Chuyển services thành list
         service_list = [service.value for service in request.services]
         if 'all' in service_list:
             service_list = ['recommender', 'value_detector', 'camera_predictor']
         
-        # Kiểm tra input method
         if request.input_method == InputMethod.FEATURE_STORE:
             if not request.product_id:
                 raise HTTPException(status_code=400, detail="product_id is required for feature_store input method")
@@ -287,7 +340,6 @@ async def predict_phone(request: PredictionRequest):
             if not request.manual_features:
                 raise HTTPException(status_code=400, detail="manual_features is required for manual input method")
             
-            # Convert manual features to dict
             manual_features_dict = request.manual_features.dict(exclude_none=True)
             predictions = predictor.predict_manual(service_list, manual_features_dict)
             input_info = "manual_input"
@@ -299,7 +351,8 @@ async def predict_phone(request: PredictionRequest):
             'services': service_list,
             'predictions': predictions,
             'input_method': input_info,
-            'status': 'success'
+            'status': 'success',
+            'user': current_user
         }
         
     except ValueError as e:
@@ -307,9 +360,8 @@ async def predict_phone(request: PredictionRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
 
-# 🆕 Endpoint đơn giản cho từng service
 @app.get("/predict/{service}/{product_id}")
-async def predict_single_service(service: PredictionService, product_id: str):
+async def predict_single_service(service: PredictionService, product_id: str, current_user: str = Depends(get_current_user)):
     """Dự đoán nhanh cho một service cụ thể"""
     service_list = [service.value]
     if service.value == 'all':
@@ -322,7 +374,8 @@ async def predict_single_service(service: PredictionService, product_id: str):
             'service': service.value,
             'product_id': product_id,
             'predictions': predictions,
-            'status': 'success'
+            'status': 'success',
+            'user': current_user
         }
         
     except Exception as e:
@@ -330,8 +383,10 @@ async def predict_single_service(service: PredictionService, product_id: str):
 
 if __name__ == "__main__":
     import uvicorn
-    print("🚀 Starting Flexible Phone Prediction API...")
+    print("🚀 Starting Flexible Phone Prediction API with Authentication...")
     print(f"📁 Available services: {list(predictor.service_requirements.keys())}")
+    print(f"👥 Total users: {len(auth_system.users)}")
+    print("🔐 Default admin account: admin/admin")
     
     uvicorn.run(
         app, 
