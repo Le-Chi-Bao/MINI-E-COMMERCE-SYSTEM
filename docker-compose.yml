@@ -32,9 +32,11 @@ services:
     build: .
     container_name: phone-prediction-web
     ports:
-      - "7876:7876"  # 👈 Khớp với server_port=7876
+      - "7867:7867"  # 👈 Khớp với server_port=7867
     volumes:
       - ./web:/app/web
+    environment:
+      - API_URL=http://api:8000  # 🆕 QUAN TRỌNG: Dùng tên service "api"
     # 👇 KHÔNG CẦN environment API_URL vì code dùng localhost:8000
     command: python /app/web/gradio_app.py
     depends_on:
